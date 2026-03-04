@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+import warnings
+warnings.filterwarnings("ignore")
+import plotly.io as pio
+pio.renderers.default = "browser"
+
+df = pd.read_csv(r"F:\解压归档\titanic.csv")
+
+#数据探索性分析与处理
+df.drop(columns = ["Ticket","Cabin"],inplace = True)
+print(df.isna().sum())
+df["Age"] = df["Age"].fillna(df["Age"].mode()[0]).astype("int")
+df["Embarked"] = df["Embarked"].fillna(df["Embarked"].mode()[0])
+print(df.info())
+
+#画静态图
+plt.figure(figsize=(18,8))
+plt.subplot(1,2,1)
+sns.countplot(x = "Sex",data = df,edgecolor = "black",palette="Set1")
+plt.title("Gender Distribution")
+plt.subplot(1,2,2)
+sns.countplot(x = "Pclass",hue="Survived",data = df,edgecolor = "black",palette="Set3")
+plt.title("survival by pessage class")
+plt.show()
+
+sns.catplot(x = "Pclass",y = "Age",hue = "Sex",col = "Survived",data = df,kind = "box")
+plt.show()
+
+plt.figure(figsize=(18,6))
+plt.subplot(1,2,1)
+sns.histplot(x = "Age",data = df,kde = True,color = "red")
+plt.subplot(1,2,2)
+sns.boxplot(x = "Pclass",y = "Fare",data = df,palette="Set1")
+plt.show()
+
+r = df.corr(numeric_only=True)
+sns.heatmap(r,annot = True,cmap="coolwarm")
+plt.show()
+
+#可交互的图
+fig = px.box(df,x = "Survived",y = "Fare",color="Survived",title='Fare Distribution by Survival')
+fig.show()
+
+fig = px.sunburst(df,
+                  path=['Pclass', 'Sex', 'Embarked'],
+                  values='Fare',
+                  title='Passenger Breakdown by Class, Gender, and Embarkation')
+fig.show()
+
+fig = px.scatter(df, x='Age', y='Fare', color='Survived',
+                 hover_data=['Name', 'Sex', 'Pclass'],
+                 title='Fare vs Age with Survival Info')
+fig.show()
+
+#很牛逼的图
+sns.pairplot(df, hue='Survived', diag_kind='kde')
+plt.show()
