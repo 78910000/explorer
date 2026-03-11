@@ -1,0 +1,47 @@
+"""#简单爬虫
+import requests
+from bs4 import BeautifulSoup
+
+#爬虫前要记得去网站network看一下有没有header要求
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+ur1 = "https://thehackernews.com/"
+response = requests.get(ur1)
+html = response.text
+soup = BeautifulSoup(html,"html.parser")
+#最好用select去获取列表
+title = soup.find_all("h2",class_ = "home-title")
+links = soup.select("a.story-link")
+for i,Title in enumerate(title,start=0):
+    print(i,Title.text)
+    print(links[i].get("href"))
+    """
+import requests
+from bs4 import BeautifulSoup
+
+url = "https://news.ycombinator.com/"
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+response = requests.get(url, headers=headers)
+
+soup = BeautifulSoup(response.text, "html.parser")
+#不知道为啥明明网站用<a.../a>封装了我要的内容下面这一行代码会把副标题也爬进去,非要我加个 > 才能达到效果
+titles = soup.select("span.titleline > a")
+scores = soup.select("span.score")
+
+for i in range(len(titles)):
+
+    title = titles[i].text
+    link = titles[i]["href"]
+
+    score = scores[i].text if i < len(scores) else "0 points"
+
+    print("Title:", title)
+    print("Link:", link)
+    print("Score:", score)
+    print("-" * 40)
+#最开始密码的把副标题也爬进去了，导致数据混乱，可以用link.startswith将内链排除
