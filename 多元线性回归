@@ -1,0 +1,58 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures
+
+
+df = pd.read_csv(r"C:\Users\HP\Downloads\abalone.csv")
+#用独热编码处理鲍鱼性别
+sex_dummies = pd.get_dummies(df['sex'], prefix='sex',dtype=int)
+df.insert(loc = 1,column="sex_M",value=sex_dummies["sex_M"])
+df.insert(loc = 2,column="sex_F",value=sex_dummies["sex_F"])
+df.insert(loc = 3,column="sex_I",value=sex_dummies["sex_I"])
+df.drop(columns = ["sex"],inplace = True)
+
+#散点图矩阵
+sns.pairplot(df,hue='rings')
+plt.show()
+
+#划分训练集和测试集
+X = df.drop('rings', axis=1)   # 替换 target_column 为实际列名
+y = df['rings']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = Pipeline([
+    ("poly",PolynomialFeatures(degree=2,include_bias=False)),
+    ("linear",LinearRegression())
+])
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+mse = mean_squared_error(y_test, y_pred)#均方误差
+r2 = r2_score(y_test, y_pred)#R方
+print(f"MSE: {mse}, R²: {r2}")
+
+#查看拟合效果
+plt.figure(figsize=(10, 10))
+plt.scatter(y_test, y_pred, alpha=1)
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)  # 对角线
+plt.xlabel('真实值')
+plt.ylabel('预测值')
+plt.title('真实值 vs 预测值')
+plt.show()
+
+#残差图
+residuals = y_test - y_pred
+
+plt.figure(figsize=(8, 4))
+plt.scatter(y_pred, residuals, alpha=1)
+plt.axhline(y=0, color='r', linestyle='--')  # 参考线 y=0
+plt.xlabel('预测值')
+plt.ylabel('残差')
+plt.title('残差图')
+plt.show()
