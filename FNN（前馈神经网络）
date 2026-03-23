@@ -1,0 +1,73 @@
+import torch
+from torchvision import datasets,transforms
+from torch.utils.data import DataLoader
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+
+transform = transforms.ToTensor()
+train_data = datasets.MNIST(
+    root="./data",
+    train = True,
+    download=True,
+    transform=transform
+)
+
+test_data = datasets.MNIST(
+    root='./data',
+    train=False,
+    transform=transform
+)
+train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
+test_loader = DataLoader(test_data, batch_size=64)
+#所有神经网络都必须继承 nn.Module
+class FNN(nn.Module):
+    def __init__(self):
+        super(FNN,self).__init__()
+        self.func1 = nn.Linear(784,128)
+        self.func2 = nn.Linear(128, 64)
+        self.func3 = nn.Linear(64,10)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = x.view(-1, 784)
+        x = self.relu(self.func1(x))
+        x = self.relu(self.func2(x))
+        x = self.func3(x)
+        return x
+
+#损失函数与优化器
+model = FNN()
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(),lr=0.001)
+
+epochs = 5#训练集训练次数
+for epoch in range(epochs):
+    for images,label in train_loader:
+        output = model(images)
+        loss = criterion(output,label)
+        optimizer.zero_grad()
+        #反向传播
+        loss.backward()
+        optimizer.step()
+    print(f"训练次数为第{epoch+1}次，当前损失值为{loss.item()}")
+
+#测试一下模型
+correct = 0
+total = 0
+#关闭梯度计算
+with torch.no_grad():
+    for images,label in test_loader:
+        output = model(images)
+        _,predicted = torch.max(output, 1)
+        total += label.size(0)
+        correct += (predicted == label).sum().item()
+    print("预测精度:", correct / total)
+
+#画个示例图
+image, label = test_data[0]
+plt.imshow(image.squeeze(), cmap="gray")
+output = model(image.unsqueeze(0))
+pred = output.argmax()
+plt.title(f"Pred:{pred} True:{label}")
+plt.show()
